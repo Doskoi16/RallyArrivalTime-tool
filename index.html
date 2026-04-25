@@ -122,6 +122,7 @@ button {
 
 <button onclick="addBlock()">＋ プレイヤーを追加</button>
 
+<!-- 変更はscript部分のみなのでHTML/CSSはそのまま使えます -->
 <script>
 
 // 説明トグル
@@ -132,6 +133,65 @@ function toggleManual(){
 
 // ===== 保存用 =====
 let savedData = [];
+
+// ★追加：ローカル保存
+function saveToLocalStorage(){
+  const data = {
+    facilityCount: facilityCount.value,
+    players: []
+  };
+
+  document.querySelectorAll(".block").forEach(block=>{
+    let obj = {
+      player: block.querySelector(".player").value,
+      now: block.querySelector(".now").value,
+      remain: block.querySelector(".remain").value,
+      gather: block.querySelector(".gather").value,
+      facilities: []
+    };
+
+    block.querySelectorAll(".facilityRow").forEach(row=>{
+      obj.facilities.push({
+        name: row.querySelector(".fname").value,
+        time: row.querySelector(".ftime").value
+      });
+    });
+
+    data.players.push(obj);
+  });
+
+  localStorage.setItem("rallyToolData", JSON.stringify(data));
+}
+
+// ★追加：復元
+function loadFromLocalStorage(){
+  const data = JSON.parse(localStorage.getItem("rallyToolData"));
+  if(!data) return;
+
+  facilityCount.value = data.facilityCount || 3;
+
+  container.innerHTML = "";
+
+  data.players.forEach(p=>{
+    let block = createBlock();
+
+    block.querySelector(".player").value = p.player;
+    block.querySelector(".now").value = p.now;
+    block.querySelector(".remain").value = p.remain;
+    block.querySelector(".gather").value = p.gather;
+
+    let rows = block.querySelectorAll(".facilityRow");
+    p.facilities.forEach((f,i)=>{
+      if(rows[i]){
+        rows[i].querySelector(".fname").value = f.name;
+        rows[i].querySelector(".ftime").value = f.time;
+      }
+    });
+
+    container.appendChild(block);
+    calc(block);
+  });
+}
 
 // ===== 時間フォーマット =====
 function formatTimeInput(value, isDelete=false){
@@ -167,53 +227,6 @@ function toStr(s){
   let m=Math.floor((s%3600)/60);
   let sec=s%60;
   return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
-}
-
-// ===== 保存 =====
-function saveAll(){
-  savedData = [];
-  document.querySelectorAll(".block").forEach(block=>{
-    let obj = {
-      player: block.querySelector(".player").value,
-      now: block.querySelector(".now").value,
-      remain: block.querySelector(".remain").value,
-      gather: block.querySelector(".gather").value,
-      facilities: []
-    };
-
-    block.querySelectorAll(".facilityRow").forEach(row=>{
-      obj.facilities.push({
-        name: row.querySelector(".fname").value,
-        time: row.querySelector(".ftime").value
-      });
-    });
-
-    savedData.push(obj);
-  });
-}
-
-// ===== 復元 =====
-function restoreAll(){
-  container.innerHTML="";
-  savedData.forEach(data=>{
-    let block=createBlock();
-
-    block.querySelector(".player").value=data.player;
-    block.querySelector(".now").value=data.now;
-    block.querySelector(".remain").value=data.remain;
-    block.querySelector(".gather").value=data.gather;
-
-    let rows=block.querySelectorAll(".facilityRow");
-    data.facilities.forEach((f,i)=>{
-      if(rows[i]){
-        rows[i].querySelector(".fname").value=f.name;
-        rows[i].querySelector(".ftime").value=f.time;
-      }
-    });
-
-    container.appendChild(block);
-    calc(block);
-  });
 }
 
 // ===== ブロック生成 =====
@@ -276,6 +289,7 @@ function createBlock(){
         input.value=formatTimeInput(input.value,isDelete);
       }
       calc(div);
+      saveToLocalStorage(); // ★追加
     });
   });
 
@@ -315,20 +329,23 @@ function calc(block){
 // ===== 操作 =====
 function addBlock(){
   container.appendChild(createBlock());
+  saveToLocalStorage(); // ★追加
 }
 
 function removeBlock(btn){
   if(container.children.length===1)return;
   btn.closest(".block").remove();
+  saveToLocalStorage(); // ★追加
 }
 
 function resetAll(){
   savedData=[];
   container.innerHTML="";
+  localStorage.removeItem("rallyToolData"); // ★追加
   addBlock();
 }
 
-// ★ 修正ポイント：changeイベント
+// 施設数変更
 facilityCount.addEventListener("change",()=>{
   let val = Number(facilityCount.value);
 
@@ -336,13 +353,19 @@ facilityCount.addEventListener("change",()=>{
     facilityCount.value = 1;
   }
 
-  saveAll();
-  restoreAll();
+  let oldData = localStorage.getItem("rallyToolData");
+
+  loadFromLocalStorage(); // 一旦復元
+  saveToLocalStorage();   // 再保存
 });
 
-window.onload=addBlock;
+// 初期化
+window.onload = () => {
+  loadFromLocalStorage();
+
+  if(container.children.length === 0){
+    addBlock();
+  }
+};
 
 </script>
-
-</body>
-</html>
