@@ -8,7 +8,6 @@
 body { font-family: Arial; margin: 30px; }
 .topBar { display:flex; gap:20px; margin-bottom:20px; }
 
-/* 説明ボックス */
 .manual {
   display:none;
   border:2px solid #888;
@@ -19,6 +18,7 @@ body { font-family: Arial; margin: 30px; }
 }
 
 .headerRow { display:flex; gap:40px; margin-bottom:10px; }
+
 .label {
   padding:8px 16px;
   border-radius:8px;
@@ -65,9 +65,7 @@ body { font-family: Arial; margin: 30px; }
 
 input { padding:5px; width:130px; }
 
-.manualBtn {
-  margin-bottom: 15px;
-}
+.manualBtn { margin-bottom: 15px; }
 
 button {
   padding:8px 15px;
@@ -84,24 +82,11 @@ button {
 
 <h1>集結着時間計算ツール</h1>
 
-<!-- 説明ボタン -->
 <button onclick="toggleManual()" class="manualBtn">取扱説明書</button>
 
-<!-- 説明本文 -->
 <div id="manual" class="manual">
   ■使い方<br>
-  １．施設数を入力してください（例えば王城戦なら 5（太陽城＋各砲台））。<br>
-  ２．ユーザー名、施設名を入力してください。<br>
-  ３．集結を１回食らって行軍時間を確認してください。
-  （もしくは、同じ距離の味方の時間をおおよその参考にしてください）<br>
-  ４．再度敵の集結がかかったら、集結完了時間（行軍開始時間）を計算し、入力してください。<br>
-    （例えば、11:11:11に集結残り3分だったら、現在時刻11:11:11, 集結残り時間00:03:00としてください）<br>
-
-  <br>■その他<br>
-  ・プレイヤーを追加する場合は「＋ プレイヤーを追加」ボタンを押してください。<br>
-  ・プレイヤーを削除する場合は、該当プレイヤーの「削除」ボタンを押してください（最低１人は必要）。<br>
-  ・「全リセット」ボタンを押すと全ての入力がリセットされます。<br>
-  ・正直機能としてはただの雑魚電卓ですが、敵の行軍時間のメモ用だと思っていただければと思います。<br>
+  ・入力内容は自動保存され、ページ更新しても保持されます。<br>
 </div>
 
 <div class="topBar">
@@ -111,9 +96,9 @@ button {
 </div>
 
 <div class="headerRow">
-  <div class="label">　　ユーザー名　　　</div>
-  <div class="label">　　集結完了時刻　　　</div>
-  <div class="label">　施設名　</div>
+  <div class="label">ユーザー名</div>
+  <div class="label">集結完了時刻</div>
+  <div class="label">施設名</div>
   <div class="label">行軍時間</div>
   <div class="label orange">到達時間</div>
 </div>
@@ -122,19 +107,15 @@ button {
 
 <button onclick="addBlock()">＋ プレイヤーを追加</button>
 
-<!-- 変更はscript部分のみなのでHTML/CSSはそのまま使えます -->
 <script>
 
-// 説明トグル
+// ===== 説明トグル =====
 function toggleManual(){
   const m = document.getElementById("manual");
   m.style.display = (m.style.display === "none") ? "block" : "none";
 }
 
-// ===== 保存用 =====
-let savedData = [];
-
-// ★追加：ローカル保存
+// ===== ローカル保存 =====
 function saveToLocalStorage(){
   const data = {
     facilityCount: facilityCount.value,
@@ -163,7 +144,6 @@ function saveToLocalStorage(){
   localStorage.setItem("rallyToolData", JSON.stringify(data));
 }
 
-// ★追加：復元
 function loadFromLocalStorage(){
   const data = JSON.parse(localStorage.getItem("rallyToolData"));
   if(!data) return;
@@ -193,7 +173,7 @@ function loadFromLocalStorage(){
   });
 }
 
-// ===== 時間フォーマット =====
+// ===== 時間処理 =====
 function formatTimeInput(value, isDelete=false){
   let n=value.replace(/\D/g,"").slice(0,6);
 
@@ -231,7 +211,6 @@ function toStr(s){
 
 // ===== ブロック生成 =====
 function createBlock(){
-
   let fc = Math.max(1, Number(facilityCount.value));
 
   let div=document.createElement("div");
@@ -243,14 +222,14 @@ function createBlock(){
   <div class="mainRow">
 
     <div class="userBox">
-      <input class="player" placeholder="ユーザー名を入力">
+      <input class="player" placeholder="ユーザー名">
     </div>
 
     <div class="calcBox">
-      <input class="now" placeholder="現在時刻を入力">
+      <input class="now" placeholder="現在時刻">
       <div class="calcRow">
         <span>+</span>
-        <input class="remain" placeholder="集結残り時間を入力">
+        <input class="remain" placeholder="残り時間">
       </div>
       <div class="bar"></div>
       <input class="gather" placeholder="集結完了時刻">
@@ -262,8 +241,8 @@ function createBlock(){
   for(let i=0;i<fc;i++){
     html+=`
       <div class="facilityRow">
-        <input class="fname" placeholder="施設名を入力">
-        <input class="ftime" placeholder="行軍時間を入力">
+        <input class="fname" placeholder="施設名">
+        <input class="ftime" placeholder="行軍時間">
         <div class="time">--:--:--</div>
       </div>
     `;
@@ -280,16 +259,14 @@ function createBlock(){
     });
 
     input.addEventListener("input",()=>{
-      if(
-        input.classList.contains("now") ||
-        input.classList.contains("remain") ||
-        input.classList.contains("gather") ||
-        input.classList.contains("ftime")
-      ){
+      if(input.classList.contains("now") ||
+         input.classList.contains("remain") ||
+         input.classList.contains("gather") ||
+         input.classList.contains("ftime")){
         input.value=formatTimeInput(input.value,isDelete);
       }
       calc(div);
-      saveToLocalStorage(); // ★追加
+      saveToLocalStorage();
     });
   });
 
@@ -329,23 +306,22 @@ function calc(block){
 // ===== 操作 =====
 function addBlock(){
   container.appendChild(createBlock());
-  saveToLocalStorage(); // ★追加
+  saveToLocalStorage();
 }
 
 function removeBlock(btn){
   if(container.children.length===1)return;
   btn.closest(".block").remove();
-  saveToLocalStorage(); // ★追加
+  saveToLocalStorage();
 }
 
 function resetAll(){
-  savedData=[];
   container.innerHTML="";
-  localStorage.removeItem("rallyToolData"); // ★追加
+  localStorage.removeItem("rallyToolData");
   addBlock();
 }
 
-// 施設数変更
+// ★ 修正済み（重要）
 facilityCount.addEventListener("change",()=>{
   let val = Number(facilityCount.value);
 
@@ -353,19 +329,21 @@ facilityCount.addEventListener("change",()=>{
     facilityCount.value = 1;
   }
 
-  let oldData = localStorage.getItem("rallyToolData");
-
-  loadFromLocalStorage(); // 一旦復元
-  saveToLocalStorage();   // 再保存
+  // 現在状態を維持して再生成
+  let temp = JSON.parse(localStorage.getItem("rallyToolData"));
+  saveToLocalStorage();
+  loadFromLocalStorage();
 });
 
 // 初期化
 window.onload = () => {
   loadFromLocalStorage();
-
   if(container.children.length === 0){
     addBlock();
   }
 };
 
 </script>
+
+</body>
+</html>
